@@ -11,6 +11,8 @@ serverSocket = socket(AF_INET, SOCK_STREAM)
 
 # Fill in end 
 
+
+
 # Server should be up and running and listening to the incoming connections
 while True:
 	print('Ready to serve...')
