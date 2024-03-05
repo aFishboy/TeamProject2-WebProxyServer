@@ -24,28 +24,35 @@ while True:
     try:
         # Receives the request message from the client
         message = connectionSocket.recv(1024).decode()
+        print("message:", message)
 
         # Extract the path of the requested object from the message
         # The path is the second part of HTTP header, identified by [1]
         filename = message.split()[1]
+        print('Request for file:', filename)
 
         # Because the extracted path of the HTTP request includes 
         # a character '\', we read the path from the second character 
         with open(filename[1:], "rb") as f:
             # Store the entire content of the requested file in a temporary buffer
             outputdata = f.read()
-
+        print("Read File")
+        
+        with open("outputData.txt", "wb") as file:
+            file.write(outputdata)
         # Send the HTTP response header line to the connection socket
         connectionSocket.send("HTTP/1.1 200 OK\r\n\r\n".encode())
  
         # Send the content of the requested file to the connection socket
         connectionSocket.sendall(outputdata)
+        print('File', filename, 'sent successfully')
     
         # Close the client connection socket
         connectionSocket.close()
 
     except IOError:
         # Send HTTP response message for file not found
+        print('File not found')
         connectionSocket.send("HTTP/1.1 404 Not Found\r\n\r\n".encode())
         
         # Close the client connection socket
