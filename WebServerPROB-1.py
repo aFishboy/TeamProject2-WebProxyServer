@@ -16,6 +16,7 @@ while True:
     
     # Set up a new connection from the client
     connectionSocket, addr = serverSocket.accept()  # Accept a new connection
+    print("connectionSocket, addr", connectionSocket, addr)
     
     # If an exception occurs during the execution of try clause
     # the rest of the clause is skipped
@@ -34,17 +35,15 @@ while True:
         # Because the extracted path of the HTTP request includes 
         # a character '\', we read the path from the second character 
         with open(filename[1:], "rb") as f:
-            # Store the entire content of the requested file in a temporary buffer
-            outputdata = f.read()
-        print("Read File")
-        
-        with open("outputData.txt", "wb") as file:
-            file.write(outputdata)
-        # Send the HTTP response header line to the connection socket
-        connectionSocket.send("HTTP/1.1 200 OK\r\n\r\n".encode())
- 
-        # Send the content of the requested file to the connection socket
-        connectionSocket.sendall(outputdata)
+            # Send the HTTP response header line to the connection socket
+            connectionSocket.send("HTTP/1.1 200 OK\r\n\r\n".encode())
+            # Read the file in smaller chunks and send it over the connection
+            while True:
+                chunk = f.read(1024)  # Read 1024 bytes at a time
+                if not chunk:
+                    break  # If no more data, break out of the loop
+                connectionSocket.send(chunk)  # Send the chunk over the connection
+
         print('File', filename, 'sent successfully')
     
         # Close the client connection socket

@@ -85,12 +85,13 @@ def handle_client(client_socket):
     
     log("Request forwarded to remote server")
     
-    # Receive data from the remote server
-    server_response = server_socket.recv(4096)
-    print("server response:\n", server_response)
-    
-    log("Received response from remote server")
-    
+    # Receive and forward the response from the remote server
+    while True:
+        server_response = server_socket.recv(4096)
+        if not server_response:
+            break  # No more data to receive, exit the loop
+        client_socket.send(server_response)
+
     # Cache the response using the filename as the key
     cache[filename] = server_response
     
@@ -101,10 +102,6 @@ def handle_client(client_socket):
     
     log("Response written to file")
     
-    # Send the received data back to the client
-    client_socket.send(server_response)
-    
-    log("Response forwarded to client")
     
     # Close the connections
     server_socket.close()
