@@ -35,7 +35,7 @@ def handle_client(client_socket):
     request_data = client_socket.recv(4096)
     print("request_data", request_data)
 
-    substring_index = request_data.find(b'/localhost:')
+    substring_index = request_data.find(b'/')
     # Check if the substring exists in the full path
     if substring_index != -1:
         # Find the index of the end of the substring '/localhost:xxxx'
@@ -55,18 +55,25 @@ def handle_client(client_socket):
 
     # Extract hostname, port, and filename from the full path
     _, host_info, filename = full_path.split(b'/')
-    hostName, portBytes = host_info.split(b':')
+
+    if b':' in host_info:
+        hostName, portBytes = host_info.split(b':')
+        port = int(portBytes)
+    else:
+        hostName = host_info
+        portBytes = b'80'
+        port = 80  # Default HTTP port
 
     # Replace the port number in the modified full path with the value from the port variable
     modified_full_path = modified_full_path.replace(b':8888', b':' + portBytes)
-    port = int(portBytes)
     
     # Check if the filename is in the cache
     if filename in cache:
         log("Cached request found")
         # If so, serve the response from the cache
-        cached_response = cache[filename]
-        client_socket.send(cached_response)
+        serverResponseList = cache[filename]
+        for serverResponse in serverResponseList:
+            client_socket.send(serverResponse)
         client_socket.close()
         return
 
@@ -85,15 +92,17 @@ def handle_client(client_socket):
     
     log("Request forwarded to remote server")
     
+    serverResponseList = []
     # Receive and forward the response from the remote server
     while True:
         server_response = server_socket.recv(4096)
         if not server_response:
             break  # No more data to receive, exit the loop
+        serverResponseList.append(server_response)
         client_socket.send(server_response)
 
     # Cache the response using the filename as the key
-    cache[filename] = server_response
+    cache[filename] = serverResponseList
     
     log("Response cached")
     
